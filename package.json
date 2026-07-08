@@ -1,6 +1,6 @@
 {
   "name": "@getsquish/squish",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Give AI random access to video: timestamped contact sheets + zoom into any start/end range, on-device. CLI + MCP server (getsquish.app).",
   "keywords": [
     "video",
@@ -34,6 +34,8 @@
     "type": "git",
     "url": "https://github.com/getsquish/squish.git"
   },
+  "homepage": "https://getsquish.app",
+  "bugs": "https://github.com/getsquish/squish/issues",
   "scripts": {
     "squish": "tsx src/main.ts",
     "test": "node --import tsx --test tests/*.test.ts",
@@ -53,7 +55,5 @@
     "tsup": "^8.5.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
-  },
-  "homepage": "https://getsquish.app",
-  "bugs": "https://github.com/getsquish/squish/issues"
+  }
 }

@@ -1,5 +1,9 @@
 # @getsquish/squish
 
+[![npm](https://img.shields.io/npm/v/%40getsquish%2Fsquish)](https://www.npmjs.com/package/@getsquish/squish)
+[![ci](https://github.com/getsquish/squish/actions/workflows/ci.yml/badge.svg)](https://github.com/getsquish/squish/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/%40getsquish%2Fsquish)](https://github.com/getsquish/squish/blob/main/LICENSE)
+
 ![Squish — video to timestamped contact sheet](https://getsquish.app/og-image.jpg)
 
 **Give AI random access to video.** Instead of forcing a model to watch a clip from beginning
