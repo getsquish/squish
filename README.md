@@ -11,6 +11,26 @@ runs on your machine. From the makers of [getsquish.app](https://getsquish.app).
 > Real run: an agent pinned a scene cut to **0.2 s** by reading **34 frames — not 3,088**
 > (overview sheet → zoom → zoom).
 
+**The demo is the primitive.** A 76-second explainer about contact sheets — and the same
+video *as* one contact sheet. One needs a play button; the other you just read:
+
+<table>
+<tr>
+<td width="50%" align="center" valign="top">
+<a href="https://getsquish.app/assets/content/smart-contact-sheets.mp4">
+<img src="https://getsquish.app/assets/content/smart-contact-sheets-poster.jpg" alt="How smart contact sheets make video addressable — 76-second explainer video" width="100%">
+</a>
+<br><sub><b>▶ watch — 76 s, linear</b></sub>
+</td>
+<td width="50%" align="center" valign="top">
+<a href="https://getsquish.app/assets/content/smart-contact-sheets-3x3.jpg">
+<img src="https://getsquish.app/assets/content/smart-contact-sheets-3x3.jpg" alt="The same 76-second video as one timestamped 3×3 contact sheet" width="100%">
+</a>
+<br><sub><b>read — one sheet, random access</b></sub>
+</td>
+</tr>
+</table>
+
 ## Install
 
 ```bash
@@ -36,8 +56,6 @@ happened; `4x4`–`6x6` recover *how* it was done. `--out <dir>` picks the desti
 video**, so you can zoom repeatedly: overview → spot a range → re-run with `--start/--end` →
 finer timecodes → drill again. Short windows stamp sub-second timecodes (`1:07.3`) so adjacent
 cells stay distinguishable.
-
-![Example contact sheet](https://getsquish.app/sample-sheet.jpg)
 
 With `--json`, stdout is one object (frozen contract — parse `contract` to detect breaking
 changes):
