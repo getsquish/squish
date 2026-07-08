@@ -1,0 +1,55 @@
+# Prove the first stranger's install path on clean machines — unit tests + typecheck +
+# build, then pack → global-install the tarball → squish a deterministic testsrc clip →
+# assert the frozen squish-cli-v0 contract → MCP handshake. Catches files-whitelist
+# mistakes and native-prebuild gaps per OS.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  pack-e2e:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install ffmpeg (ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install ffmpeg (macos)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - name: Unit tests + typecheck + build
+        run: |
+          npm ci
+          npm test
+          npm run check
+          npm run build
+      - name: Pack + global-install the tarball
+        run: |
+          npm pack
+          npm install -g ./getsquish-squish-*.tgz
+      - name: Stranger e2e — CLI contract (outside the repo)
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          ffmpeg -v error -f lavfi -i testsrc=duration=5:size=640x360:rate=24 -pix_fmt yuv420p -y clip.mp4
+          squish clip.mp4 --json > out.json
+          node -e "const r=require('./out.json'); if(r.contract!=='squish-cli-v0'||r.sheets<1||r.frames<1){console.error(r);process.exit(1)}; require('fs').accessSync(r.files[0]); console.log('CLI contract OK:', r.files[0])"
+          # zoom window (adaptive retrieval): timecode input form, resolved echo, additive contract
+          squish clip.mp4 --start 0:01 --end 0:03 --json > win.json
+          node -e "const r=require('./win.json'); if(r.contract!=='squish-cli-v0'||!r.window||r.window.start!==1||r.window.end!==3){console.error(r);process.exit(1)}; console.log('window OK:', JSON.stringify(r.window))"
+      - name: Stranger e2e — MCP handshake
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          # perl alarm instead of `timeout`: present on both runners, absent-proof on macOS
+          printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","id":2,"method":"tools/list"}\n' \
+            | perl -e 'alarm 30; exec @ARGV' squish mcp | tee mcp-out.txt | grep -q squish_video
+          echo 'MCP handshake OK'
