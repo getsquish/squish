@@ -2,14 +2,15 @@
 
 ![Squish — video to timestamped contact sheet](https://getsquish.app/og-image.jpg)
 
-**Give AI random access to video.** Squish samples a clip into a timestamped contact sheet —
-a grid of frames, each cell stamped with its timecode — that a vision model (or a human) reads
-in one pass and cites with real timestamps. Spotted a moment worth a closer look? **Zoom in:**
-re-squish any `start`/`end` range at higher density, as deep as the answer needs. Everything
-runs on your machine. From the makers of [getsquish.app](https://getsquish.app).
+**Give AI random access to video.** Instead of forcing a model to watch a clip from beginning
+to end, Squish converts continuous video into an **addressable visual representation** — one
+an agent can navigate, revisit, and progressively refine. Timestamped contact sheets are the
+*first implementation* of that primitive: a grid of frames, each cell stamped with its
+absolute timecode. Everything runs on your machine. From the makers of
+[getsquish.app](https://getsquish.app).
 
-> Real run: an agent pinned a scene cut to **0.2 s** by reading **34 frames — not 3,088**
-> (overview sheet → zoom → zoom).
+> **Agents don't consume videos — they navigate them.** Real run: a scene cut pinned to
+> **0.2 s** by retrieving **34 frames — not 3,088** (overview → zoom → zoom).
 
 **The demo is the primitive.** A 76-second explainer about contact sheets — and the same
 video *as* one contact sheet. One needs a play button; the other you just read:
@@ -30,6 +31,13 @@ video *as* one contact sheet. One needs a play button; the other you just read:
 </td>
 </tr>
 </table>
+
+## Why this works
+
+Video is continuous; reasoning is sparse. Most questions touch a tiny fraction of the
+timeline. Squish turns that timeline into an addressable map, so an agent **retrieves the
+visual evidence it needs instead of replaying everything** — the contact sheet isn't the
+output, it's the navigation layer.
 
 ## Install
 
@@ -85,7 +93,7 @@ squish mcp        # stdio server
 One tool, **`squish_video`** — `{ video_path, density?, start?, end?, out_dir? }` → the CLI
 contract **plus** `timecodes[][]` (one per frame, per sheet; `m:ss`, sub-second `m:ss.d` when
 a window is short), stamped `"contract": "squish-mcp-v0"`. `start`/`end` accept seconds or
-sheet timecodes and enable the zoom loop above.
+sheet timecodes and drive the navigation loop below.
 
 Works with Claude Code, Claude Desktop, Cursor, Hermes, and any stdio MCP client:
 
@@ -97,14 +105,16 @@ Works with Claude Code, Claude Desktop, Cursor, Hermes, and any stdio MCP client
 }
 ```
 
-## The agent recipe
+## The navigation loop
 
-1. Call `squish_video` (MCP) or `squish clip.mov --json` (CLI).
-2. Read the returned JPG(s) with vision — cells are in time order, left→right, top→bottom.
-3. Answer citing the timecodes printed in each cell ("at 0:07 the press comes down").
-4. Need a closer look at a moment? Call again with `start`/`end` set to the timecodes you
-   spotted — denser sheets of a narrower window, addresses still absolute. Repeat until the
-   answer is visible.
+1. **Overview** — call `squish_video` (MCP) or `squish clip.mov --json` (CLI) and read the
+   sheet(s) with vision. Cells run in time order, left→right, top→bottom.
+2. **Navigate** — spot the regions that matter; every cell carries an absolute timecode.
+3. **Zoom** — call again with `start`/`end` set to the timecodes you spotted, only where
+   uncertainty remains: denser sheets of a narrower window, addresses still absolute.
+4. **Repeat** until the answer is observable — never re-read the whole clip at high density
+   when one range matters.
+5. **Cite** absolute timestamps ("at 0:07 the press comes down").
 
 ## Privacy
 
