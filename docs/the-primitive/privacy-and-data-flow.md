@@ -1,5 +1,5 @@
 ---
-description: Where your video is processed on each Squish surface, what the hosted API retains, and the exact paid boundary.
+description: Where your video is processed on each Squish surface, what the hosted API deletes and what it caches, and the exact paid boundary.
 ---
 
 # Privacy and data flow
@@ -22,12 +22,20 @@ The web app at [getsquish.app](https://getsquish.app) follows the same principle
 
 ## The hosted path: what happens to your bytes
 
-The hosted API exists for workflows that cannot run local tools — CI, serverless, hosted agents, products that need a request/response pipe. Sending a clip there is an **intentional upload** by authenticated request, and its data flow is deliberately short-lived:
+The hosted API exists for workflows that cannot run local tools — CI, serverless, hosted agents, products that need a request/response pipe. Sending a clip there is an **intentional upload** by authenticated request — to a **compute service, not a storage service**. One synchronous request is the whole job (upload, process, respond), and the two kinds of data it touches live on different tracks:
 
-* One synchronous request is the whole job — upload, process, respond.
-* **The uploaded video is deleted the moment the job ends**, success or failure. No copy is kept.
-* Output sheets live at temporary capability URLs for **about 24 hours**, then a sweep deletes them. Download anything you want to keep.
+```
+uploaded video ──► processing ──► deleted the moment the job ends
+                       │           (success or failure)
+                       ▼
+              generated sheets ──► temporary cache (~24 h) ──► expire automatically
+```
+
+* **Uploaded video** exists only to serve the request that carried it: deleted the moment the job ends, success or failure. Never retained, never used for training, and there is no media library.
+* **Generated sheets** are a temporary cache at capability URLs — kept about 24 hours so you can download them or re-fetch the URLs, then they expire and are deleted automatically. The cache is not storage: download anything you want to keep.
 * Authentication is a bearer key; only the key's SHA-256 hash is stored — the plaintext is shown once and cannot be recovered, only replaced.
+
+Need stronger guarantees? Run Squish locally — the CLI and MCP server never upload your videos (see [Local processing](#local-processing-nothing-leaves-your-machine)).
 
 Full request/response details are in the [hosted API reference](../reference/http-api.md) and the [API quickstart](../getting-started/quickstart-api.md).
 

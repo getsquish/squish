@@ -124,10 +124,27 @@ What's safe to retry follows from when money moves — credits are deducted atom
 3. The connection stays open for the duration (seconds for typical clips).
 4. `job_id` in the response is a receipt: it appears in the sheet URLs and in your usage
    table on `/api-keys`.
-5. **The uploaded video is deleted the moment the job ends**, success or failure. No copy
-   is kept.
-6. Sheets live at their capability URLs for **about 24 hours**, then a sweep deletes
-   them. Download to keep.
+## Data lifecycle
+
+The hosted API is a **compute service, not a storage service** — a stateless job with a
+short-lived output cache. The two kinds of data live on different tracks:
+
+```
+uploaded video ──► processing ──► deleted the moment the job ends
+                       │           (success or failure)
+                       ▼
+              generated sheets ──► temporary cache (~24 h) ──► expire automatically
+```
+
+- **Uploaded video** is used only to process the request that carried it, then deleted the
+  moment the job ends — success or failure. It is never retained, never used for training,
+  and there is no media library.
+- **Generated sheets** are a temporary cache at their capability URLs — kept about
+  24 hours so you can download them or re-fetch the URLs, then they expire and are deleted
+  automatically. The cache is not storage: download anything you want to keep.
+
+Need stronger guarantees? Run Squish locally — the local [CLI](cli.md) and
+[MCP server](mcp.md) never upload your videos.
 
 ## Caps
 

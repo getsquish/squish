@@ -10,10 +10,12 @@ metadata with every cell's timecode. Use it when a workflow cannot run the local
 serverless, hosted agents, or any machine without ffmpeg.
 
 {% hint style="info" %}
-**This path is an intentional upload.** The uploaded video is deleted the moment the job ends,
-success or failure — no copy is kept. Output sheets live at temporary capability URLs for about
-24 hours, then a sweep deletes them — download to keep. The local
-[CLI](quickstart-cli.md) and [MCP server](quickstart-mcp.md) never upload anything.
+**This path is an intentional upload — to a compute service, not a storage service.** The
+uploaded video is deleted the moment the job ends, success or failure; it is never retained
+and never used for training. Output sheets are a temporary cache at capability URLs (about
+24 hours), then expire automatically — download to keep. Need stronger guarantees? Run
+Squish locally: the [CLI](quickstart-cli.md) and [MCP server](quickstart-mcp.md) never
+upload your videos.
 {% endhint %}
 
 ## Get a key
