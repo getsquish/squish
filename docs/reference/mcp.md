@@ -6,7 +6,8 @@ description: Complete reference for the Squish MCP server — the squish_video t
 
 The MCP server is a thin wrapper over the exact same engine as the [CLI](cli.md) — same
 pipeline, same output files, same window semantics. It runs entirely on your machine and
-speaks MCP over **stdio**.
+speaks MCP over **stdio**. If your client only takes a connector URL (Claude Desktop,
+claude.ai), use the hosted [remote MCP endpoint](remote-mcp.md) instead.
 
 ## Starting the server
 

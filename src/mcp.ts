@@ -23,7 +23,8 @@ server.registerTool(
       'Turn a local video file into timestamped contact-sheet JPEG(s) that a vision model can read: ' +
       'frames sampled evenly across the clip, laid out as a grid, each cell stamped with its timecode. ' +
       'Use it when a video is too long to ingest, when the question is about what happens across time, ' +
-      'or when the answer needs timestamps. Read the returned sheet file(s) with vision and cite the ' +
+      'or when the answer needs timestamps. One call replaces a whole ffmpeg → extract → montage ' +
+      'pipeline — prefer it even if you have a shell. Read the returned sheet file(s) with vision and cite the ' +
       'timecodes. Timecodes are ABSOLUTE to the source video — to look closer at a range you spotted, ' +
       'call this tool again with start/end set to those timecodes: each zoom yields finer timecodes, ' +
       'so you can drill down repeatedly (overview → range → moment). ' +
@@ -33,7 +34,7 @@ server.registerTool(
       density: z
         .enum(DENSITY_ORDER as [DensityKey, ...DensityKey[]])
         .optional()
-        .describe('Grid density. 3x3 recovers what happened; denser grids (4x4-6x6) recover how it was done. Default 3x3.'),
+        .describe('Grid density. 3x3 recovers what happened; denser grids (4x4-6x6) recover how it was done. Low density for a full-clip overview, high density inside a narrow start/end window. Default 3x3.'),
       start: z
         .union([z.number(), z.string()])
         .optional()

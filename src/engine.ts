@@ -18,6 +18,11 @@ export interface RunOptions {
   outDir?: string; // default: beside the input
   start?: number;  // zoom-window bounds, seconds — ABSOLUTE in the source video (spec I1)
   end?: number;
+  // Optional cooperative abort — checked before ffmpeg and between frame extractions, so a
+  // caller whose client can vanish mid-run (the remote MCP mouth) holds the droplet's
+  // single-runner gate for at most ~one frame seek after the disconnect. Mouths that don't
+  // pass it are unaffected.
+  signal?: AbortSignal;
 }
 
 // Window semantics (adaptive-visual-retrieval spec §4): clamp what an agent can't know
@@ -54,7 +59,12 @@ export interface RunResult {
   plan: SheetPlan; // exposed so mouths can derive extras (e.g. MCP timecodes) from core data
 }
 
+const throwIfAborted = (signal: AbortSignal | undefined) => {
+  if (signal?.aborted) throw new Error('aborted before completion');
+};
+
 export async function runSquish(opts: RunOptions): Promise<RunResult> {
+  throwIfAborted(opts.signal);
   await assertFfmpeg();
 
   const input = path.resolve(opts.input);
@@ -84,6 +94,7 @@ export async function runSquish(opts: RunOptions): Promise<RunResult> {
     for (let s = 0; s < plan.sheets; s++) {
       const row: string[] = [];
       for (let i = 0; i < plan.perSheet; i++) {
+        throwIfAborted(opts.signal); // between frames: a dead client stops costing within ~one seek
         const p = path.join(tmp, `f-${s}-${i}.jpg`);
         await extractFrame(input, plan.timestamps[s][i], p);
         row.push(p);

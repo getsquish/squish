@@ -24,6 +24,7 @@
 
 * [CLI](reference/cli.md)
 * [MCP server](reference/mcp.md)
+* [Remote MCP endpoint](reference/remote-mcp.md)
 * [Hosted API](reference/http-api.md)
 * [Sheet format spec](reference/sheet-format.md)
 * [Stability and versioning](reference/stability.md)
