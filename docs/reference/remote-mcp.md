@@ -17,7 +17,8 @@ sheets are served from short-lived capability URLs. See
 
 1. Settings → Connectors → **Add custom connector**
 2. Name: `Squish`
-3. URL: `https://api.getsquish.app/mcp` — no auth; leave advanced settings empty
+3. URL: `https://api.getsquish.app/mcp` — works with no key (small free lane); add
+   `Authorization: Bearer <your key>` in advanced/header settings if your client supports it
 4. In a chat: enable Squish under Connectors, then ask about any public video URL
 
 ## The tool
@@ -53,12 +54,32 @@ Stateless and POST-only: `GET`/`DELETE` answer `405` (spec-compliant for a serve
 opens no streams), responses are plain JSON, and no `Mcp-Session-Id` is ever issued.
 Host and Origin headers are validated.
 
+## Authentication & quotas
+
+The endpoint has two lanes:
+
+- **Keyed** — send `Authorization: Bearer sq_live_…` with the same API key the
+  [HTTP API](http-api.md) uses, minted at
+  [getsquish.app/api-keys](https://getsquish.app/api-keys) (revoke/rotate on the same page:
+  create a new key, revoke the old). Jobs are priced in the same
+  [density-weighted credits](http-api.md#credits-and-pricing) as `POST /v1/squish` — charged
+  before extraction, **auto-refunded** if the engine fails — and each job appears in the
+  usage table on `/api-keys`. Successful results carry `credits_charged` and
+  `credits_remaining`.
+- **Anonymous** — no header at all. A small free lane: a few jobs per IP per UTC day
+  (currently 3) under a shared endpoint-wide daily ceiling. Successful results carry
+  `free_jobs_remaining_today`. When the lane runs out, the tool returns a **structured JSON
+  error** with `billing_url` and a hint the model can relay — mint a free key (7 free
+  credits/day, no card) or run Squish locally.
+
+A present-but-invalid `Authorization` header is an honest `401` (never a silent downgrade
+to the free lane). Request floods answer `429` with a `Retry-After` header.
+
 ## Beta limits
 
-Unauthenticated while the official-app auth story settles. Abuse is bounded by a global
-daily job cap plus a one-video-at-a-time gate (a busy call returns a polite retry message,
-never a hang). Fetched videos obey the hosted caps (300 MB / 30 min) and are deleted when
-the job ends; sheets expire after ~24 h.
+Abuse is bounded by the lanes above plus a one-video-at-a-time gate (a busy call returns a
+polite retry message, never a hang). Fetched videos obey the hosted caps (300 MB / 30 min)
+and are deleted when the job ends; sheets expire after ~24 h.
 
 ## When to prefer it
 
