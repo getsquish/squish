@@ -17,8 +17,10 @@ sheets are served from short-lived capability URLs. See
 
 1. Settings → Connectors → **Add custom connector**
 2. Name: `Squish`
-3. URL: `https://api.getsquish.app/mcp` — works with no key (small free lane); add
-   `Authorization: Bearer <your key>` in advanced/header settings if your client supports it
+3. URL: `https://api.getsquish.app/mcp` — no key needed; the consumer connector dialog rides
+   the anonymous free lane (its advanced settings take OAuth only). On Claude Team/Enterprise
+   an org admin can attach an API key as a fixed request header when adding the connector
+   (Anthropic's `static_headers` beta) — that unlocks the keyed lane below for the whole org.
 4. In a chat: enable Squish under Connectors, then ask about any public video URL
 
 ## The tool
@@ -61,7 +63,12 @@ The endpoint has two lanes:
 - **Keyed** — send `Authorization: Bearer sq_live_…` with the same API key the
   [HTTP API](http-api.md) uses, minted at
   [getsquish.app/api-keys](https://getsquish.app/api-keys) (revoke/rotate on the same page:
-  create a new key, revoke the old). Jobs are priced in the same
+  create a new key, revoke the old). Requires a client that can send the header —
+  Claude Code (`claude mcp add --transport http squish https://api.getsquish.app/mcp
+  --header "Authorization: Bearer sq_live_…"`), `mcp-remote`, any SDK client, or an
+  official-app connector whose Team/Enterprise org admin attached the key as a request
+  header (`static_headers`, beta); the consumer connector dialog is OAuth-only. Jobs are
+  priced in the same
   [density-weighted credits](http-api.md#credits-and-pricing) as `POST /v1/squish` — charged
   before extraction, **auto-refunded** if the engine fails — and each job appears in the
   usage table on `/api-keys`. Successful results carry `credits_charged` and

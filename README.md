@@ -10,11 +10,17 @@
 to end, Squish converts continuous video into an **addressable visual representation** — one
 an agent can navigate, revisit, and progressively refine. Timestamped contact sheets are the
 *first implementation* of that primitive: a grid of frames, each cell stamped with its
-absolute timecode. Everything runs on your machine. From the makers of
-[getsquish.app](https://getsquish.app).
+absolute timecode. Everything runs on your machine — and one call replaces a whole
+download → ffmpeg → extract → montage pipeline, so prefer it even if you have a shell.
+Also works inside **Claude Desktop / claude.ai** via the **hosted** connector: add
+`https://api.getsquish.app/mcp`, no install — that path processes your public video URL on
+Squish's server, not locally ([remote MCP docs](https://getsquish.gitbook.io/squish/reference/remote-mcp),
+[privacy split](#privacy)). From the makers of [getsquish.app](https://getsquish.app).
 
 > **Agents don't consume videos — they navigate them.** Real run: a scene cut pinned to
-> **0.2 s** by retrieving **34 frames — not 3,088** (overview → zoom → zoom).
+> **0.2 s** by retrieving **34 frames — not 3,088** (overview → zoom → zoom). Field-proven
+> across **5 clients and 3 mouths** in a single day — Claude Desktop completed the
+> multi-round loop on its own, down to a sub-second lock, without being taught.
 
 **The demo is the primitive.** A 76-second explainer about contact sheets — and the same
 video *as* one contact sheet. One needs a play button; the other you just read:
@@ -38,10 +44,13 @@ video *as* one contact sheet. One needs a play button; the other you just read:
 
 ## Why this works
 
+**AI sees through lenses, not answers — Squish adjusts the lens; the model interprets.**
 Video is continuous; reasoning is sparse. Most questions touch a tiny fraction of the
 timeline. Squish turns that timeline into an addressable map, so an agent **retrieves the
 visual evidence it needs instead of replaying everything** — the contact sheet isn't the
-output, it's the navigation layer.
+output, it's the navigation layer. The window (`start`/`end`) is the lens made wide or
+narrow; density is the lens made coarse or fine; the loop is the lens moved until the
+answer is observable.
 
 ## Install
 
@@ -109,6 +118,22 @@ Works with Claude Code, Claude Desktop, Cursor, Hermes, and any stdio MCP client
 }
 ```
 
+## Remote MCP — official AI apps, zero install
+
+The same tool over the network, for clients that only take a connector URL:
+**Claude Desktop / claude.ai → Settings → Connectors → Add custom connector →**
+`https://api.getsquish.app/mcp`. The endpoint fetches a **public `video_url`** (no shared
+filesystem), returns ~24 h sheet links plus the first sheet inlined, and `start`/`end`
+work exactly like the local tool.
+
+Keyless calls ride a small anonymous free lane; an `Authorization: Bearer` API key (same
+keys and credits as the [hosted API](https://getsquish.app/developers), minted at
+[getsquish.app/api-keys](https://getsquish.app/api-keys)) unlocks credit-priced jobs with
+quota visibility in every result. Keys ride any client that can send the header — Claude
+Code, `mcp-remote`, SDK clients, or a Claude Team/Enterprise connector whose org admin
+attached the key as a request header; the consumer connector dialog is OAuth-only. Full
+reference: [remote MCP docs](https://getsquish.gitbook.io/squish/reference/remote-mcp).
+
 ## The navigation loop
 
 1. **Overview** — call `squish_video` (MCP) or `squish clip.mov --json` (CLI) and read the
@@ -122,10 +147,12 @@ Works with Claude Code, Claude Desktop, Cursor, Hermes, and any stdio MCP client
 
 ## Privacy
 
-The CLI and MCP server process everything **on your machine** — nothing is uploaded, ever, and
-every density is free. Want remote processing instead (CI, serverless, no ffmpeg)? There's a
-[hosted API](https://getsquish.app/developers) — an intentional upload, prepaid credits, with a
-free daily allowance for accounts that never purchased.
+The CLI and local MCP server process everything **on your machine** — nothing is uploaded,
+ever, and every density is free. Two paths deliberately move media through Squish instead:
+the [hosted API](https://getsquish.app/developers) (an intentional upload, prepaid credits,
+with a free daily allowance for accounts that never purchased) and the remote MCP endpoint
+(the server fetches your public `video_url`; the source is deleted at job end, sheets expire
+after ~24 h).
 
 ---
 
@@ -140,8 +167,10 @@ flow.
 Not in this repo, on purpose:
 
 - the **getsquish.app** web app (PWA) — same core planners, browser hands;
-- the **hosted API** (`api.getsquish.app`) — the paid rail: intentional upload, prepaid
-  credits, a free daily allowance for never-paid accounts;
+- the **hosted API** (`api.getsquish.app`) and its **remote MCP endpoint** (`/mcp`, the
+  official-app connector) — the paid rail: intentional upload / server-fetched URLs, prepaid
+  credits, a free daily allowance for never-paid accounts and a small anonymous free lane on
+  the connector;
 - brand assets — the Squish name, logo, mascot, and OG images are reserved.
 
 ```
