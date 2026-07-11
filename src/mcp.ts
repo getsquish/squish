@@ -7,18 +7,33 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { readFileSync } from 'node:fs';
 import { DENSITY_ORDER, type DensityKey } from './core/density.ts';
 import { parseTime } from './core/format.ts';
 import { planTimecodes } from './core/sampling.ts';
 import { runSquish } from './engine.ts';
 import { formatMcpJson } from './report.ts';
 
-const server = new McpServer({ name: 'squish', version: '0.2.0' });
+// serverInfo goes out on the wire at initialize (and directory scans import it) — read the
+// real version instead of restating it (it sat at a stale hardcoded 0.2.0 through two releases).
+const VERSION = (
+  JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
+).version;
+
+const server = new McpServer({ name: 'squish', version: VERSION });
 
 server.registerTool(
   'squish_video',
   {
     title: 'Squish a video into a timestamped contact sheet',
+    // Unlike the HTTP mouth: sheets land on the caller's own disk (not read-only) and
+    // nothing leaves the machine (closed world). Reruns overwrite the same outputs.
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       'Turn a local video file into timestamped contact-sheet JPEG(s) that a vision model can read: ' +
       'frames sampled evenly across the clip, laid out as a grid, each cell stamped with its timecode. ' +

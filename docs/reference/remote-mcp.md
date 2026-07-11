@@ -73,11 +73,16 @@ The endpoint has two lanes:
   before extraction, **auto-refunded** if the engine fails — and each job appears in the
   usage table on `/api-keys`. Successful results carry `credits_charged` and
   `credits_remaining`.
-- **Anonymous** — no header at all. A small free lane: a few jobs per IP per UTC day
-  (currently 3) under a shared endpoint-wide daily ceiling. Successful results carry
+- **Anonymous** — no header at all. A small free lane: a few jobs per UTC day (currently 3),
+  counted per user when the client sends the Apps-SDK `_meta["openai/subject"]` id (official
+  AI apps reach this endpoint through shared egress IPs) and per IP otherwise, under a shared
+  endpoint-wide daily ceiling. Successful results carry
   `free_jobs_remaining_today`. When the lane runs out, the tool returns a **structured JSON
-  error** with `billing_url` and a hint the model can relay — mint a free key (7 free
-  credits/day, no card) or run Squish locally.
+  error** the model can relay. On most lanes it carries `billing_url` and a hint — mint a
+  free key (7 free credits/day, no card) or run Squish locally. **Apps-SDK (ChatGPT app)
+  traffic hears a non-commercial version instead** — wait for the 00:00 UTC reset or run
+  Squish locally — because OpenAI's app-guidelines forbid digital-credit upsells (including
+  freemium ones) inside ChatGPT apps.
 
 A present-but-invalid `Authorization` header is an honest `401` (never a silent downgrade
 to the free lane). Request floods answer `429` with a `Retry-After` header.

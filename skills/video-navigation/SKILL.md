@@ -114,7 +114,7 @@ If tool names differ from these, match by the contract shape above.
 |---|---|---|
 | **MCP (local)** | tool `squish_video` — register with `npx -y @getsquish/squish mcp` | args `{ video_path, density?, start?, end?, out_dir? }`; returns `files[]` + `timecodes[][]` (per-sheet, per-cell). Nothing leaves the machine. |
 | **CLI** | `npx -y @getsquish/squish <video> --json [--density 4x4] [--start 1:00 --end 1:15] [--out dir]` | stdout JSON: `files[]`, contract `squish-cli-v0` — no `timecodes[][]` field on this path; the timecodes are the pills burned into each cell, so read them off the sheets. Needs Node ≥ 20 + ffmpeg. |
-| **MCP (remote)** | Streamable HTTP connector at `https://api.getsquish.app/mcp` | input is `video_url` (public URL) — the server **fetches** it, so the footage transits Squish infrastructure; anonymous free lane (small daily cap) or `Authorization: Bearer` key; first sheet arrives inline. Quota errors carry a `billing_url` — relay it to the user, don't retry blindly. |
+| **MCP (remote)** | Streamable HTTP connector at `https://api.getsquish.app/mcp` | input is `video_url` (public URL) — the server **fetches** it, so the footage transits Squish infrastructure; anonymous free lane (small daily cap) or `Authorization: Bearer` key; first sheet arrives inline. Quota errors are structured — relay the hint to the user (most lanes include a `billing_url`; ChatGPT-app traffic hears the daily reset + free local tool instead), don't retry blindly. |
 
 `density` accepts `3x3`–`6x6`; `start`/`end` accept seconds or sheet timecode strings like
 `"1:07.3"`. Read each returned sheet with vision, in order.

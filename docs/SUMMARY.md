@@ -31,6 +31,7 @@
 
 ## Resources
 
+* [Support](resources/support.md)
 * [Changelog](resources/changelog.md)
 * [Troubleshooting](resources/troubleshooting.md)
 * [FAQ](resources/faq.md)

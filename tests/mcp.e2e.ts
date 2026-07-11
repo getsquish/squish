@@ -26,7 +26,16 @@ const client = new Client({ name: 'squish-e2e', version: '0.0.0' });
 await client.connect(transport);
 
 const tools = await client.listTools();
-assert.ok(tools.tools.some((t) => t.name === 'squish_video'), 'squish_video is listed');
+const tool = tools.tools.find((t) => t.name === 'squish_video');
+assert.ok(tool, 'squish_video is listed');
+// Behavior hints differ from the HTTP mouth on purpose: this mouth writes sheet files onto
+// the caller's own disk (not read-only) and never reaches outside the machine (closed world).
+assert.deepEqual(tool.annotations, {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+});
 
 const res = await client.callTool({
   name: 'squish_video',
@@ -46,6 +55,12 @@ await Promise.all(parsed.files.map((f: string) => access(f)));
 const bad = await client.callTool({ name: 'squish_video', arguments: { video_path: '/nope/missing.mov' } });
 assert.ok(bad.isError, 'missing input surfaces as isError');
 
-console.log(`E2E OK — ${parsed.sheets} sheet(s), ${parsed.frames} frames @ ${density}`);
+// serverInfo must report the real package version — the Apps SDK scan imports it, and a
+// stale number on the wire is a metadata lie (was hardcoded 0.2.0 while npm shipped 0.2.2).
+const { readFileSync } = await import('node:fs');
+const pkgVersion = (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }).version;
+assert.equal(client.getServerVersion()?.version, pkgVersion, 'stdio serverInfo version tracks package.json');
+
+console.log(`E2E OK — ${parsed.sheets} sheet(s), ${parsed.frames} frames @ ${density} — serverInfo ${pkgVersion}`);
 console.log(text);
 await client.close();
