@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.getsquish/squish",
+  "title": "Squish",
+  "description": "Give AI random access to video: timestamped contact sheets + zoom into any start/end range.",
+  "repository": {
+    "url": "https://github.com/getsquish/squish",
+    "source": "github"
+  },
+  "version": "0.2.3",
+  "websiteUrl": "https://getsquish.app",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.getsquish.app/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@getsquish/squish",
+      "version": "0.2.3",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp",
+          "description": "Run the MCP server (the bare command is the CLI)"
+        }
+      ]
+    }
+  ]
+}

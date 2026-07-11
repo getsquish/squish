@@ -1,0 +1,41 @@
+# Publish this server's metadata to the official MCP Registry on every release tag.
+#
+# Deliberately registry-only: the npm publish itself is founder-gated (local, 2FA) and
+# happens BEFORE the tag per the release ritual — npm publish → mirror → tag vX.Y.Z →
+# this workflow. The registry then validates the npm package by reading `mcpName` from
+# the version that is already live on npm, so ordering matters and is enforced by the
+# ritual, not by this file.
+#
+# Auth is GitHub OIDC against the io.github.getsquish/* namespace — no secrets involved.
+name: Publish to MCP Registry
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC token for mcp-publisher login github-oidc
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Sync server.json versions to the tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          jq --arg v "$VERSION" '.version = $v | .packages[].version = $v' server.json > server.tmp
+          mv server.tmp server.json
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server to MCP Registry
+        run: ./mcp-publisher publish
