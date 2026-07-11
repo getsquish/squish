@@ -1,31 +1,42 @@
 ---
-description: Install the drop-in skill file that teaches an agent the video → contact sheet → timestamps recipe, including the zoom loop.
+description: Install the video-navigation skill — the protocol that teaches an agent to navigate video via timestamped contact sheets, the zoom loop, and evidence-disciplined citations.
 ---
 
 # Install the agent skill
 
-The Squish skill is a single markdown file of drop-in instructions that teaches an agent the
-whole recipe: when handed a video it cannot ingest, compress it into timestamped contact
-sheets (via the Squish CLI or MCP tool), read the sheets with vision, answer with absolute
-timecodes — and when the answer hides between two cells, zoom in with `start`/`end` instead
-of guessing. An agent with the skill installed reaches for Squish on its own; you never have
-to explain the workflow in the prompt.
+The **`video-navigation`** skill is a drop-in protocol document that teaches an agent the
+whole practice: when handed a video it cannot ingest, compress it into timestamped contact
+sheets, read the grid, zoom into ranges with `start`/`end` instead of guessing, confirm
+before citing, and answer with absolute timecodes. An agent with the skill installed reaches
+for Squish on its own; you never have to explain the workflow in the prompt. It follows the
+open [Agent Skills](https://agentskills.io) format, so it works in any agent that consumes
+`SKILL.md` skills.
 
 ## Where it lives
 
-[`SKILL.md`](https://github.com/getsquish/squish/blob/main/SKILL.md) at the root of
-[github.com/getsquish/squish](https://github.com/getsquish/squish). It declares its own
-requirements in the frontmatter: shell access, Node ≥ 20, and `ffmpeg` on PATH.
+[`skills/video-navigation/SKILL.md`](https://github.com/getsquish/squish/tree/main/skills/video-navigation)
+in [github.com/getsquish/squish](https://github.com/getsquish/squish). It declares its own
+requirements in the frontmatter: a contact-sheet tool — the Squish CLI/MCP locally (Node ≥ 20,
+`ffmpeg` on PATH) or the hosted connector.
 
-## Install for Claude Code
+## Install with the skills CLI (recommended)
+
+One command, works across Claude Code, Cursor, Codex, and every other agent the
+[`skills` CLI](https://github.com/vercel-labs/skills) supports:
+
+```bash
+npx skills add getsquish/squish
+```
+
+## Install by hand (Claude Code)
 
 Claude Code discovers skills as `SKILL.md` files inside a skills directory. Copy the file
 into a folder named after the skill:
 
 ```bash
-mkdir -p ~/.claude/skills/squish-video-to-contact-sheet
-curl -o ~/.claude/skills/squish-video-to-contact-sheet/SKILL.md \
-  https://raw.githubusercontent.com/getsquish/squish/main/SKILL.md
+mkdir -p ~/.claude/skills/video-navigation
+curl -o ~/.claude/skills/video-navigation/SKILL.md \
+  https://raw.githubusercontent.com/getsquish/squish/main/skills/video-navigation/SKILL.md
 ```
 
 Use a project's `.claude/skills/` directory instead of `~/.claude/skills/` to scope the skill
@@ -39,8 +50,8 @@ to running the CLI via `npx`.
 The file is plain markdown with a small YAML frontmatter — nothing in it is framework-specific.
 For any other agent framework, either drop it wherever that framework loads skill/instruction
 files, or paste the body into the agent's system prompt or custom instructions. The only real
-requirements are the ones the skill states: the agent needs shell access (or the `squish_video`
-MCP tool), vision, Node ≥ 20, and `ffmpeg` on PATH.
+requirements are the ones the skill states: the agent needs vision plus a contact-sheet tool —
+shell access (Node ≥ 20, `ffmpeg`) or the `squish_video` MCP tool.
 
 ## Worked example: Hermes
 

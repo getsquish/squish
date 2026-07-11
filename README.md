@@ -177,7 +177,7 @@ Not in this repo, on purpose:
 src/            CLI (main/args) · engine (probe → plan → extract → compose → write) · MCP server · sheet renderer
 src/core/       pure planners shared with the web app: density · sampling · grid layout · timecode format
 tests/          node:test suite + a real-MCP-client e2e
-SKILL.md        drop-in agent skill teaching the contact-sheet + zoom-loop recipe
+skills/         agent skills — `npx skills add getsquish/squish` installs video-navigation
 ```
 
 ## License
