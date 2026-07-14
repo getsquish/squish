@@ -1,3 +1,7 @@
+---
+description: How to reach the people who build Squish — email, GitHub issues, the FAQ, and what to include so a report can be acted on fast.
+---
+
 # Support
 
 Squish is built and supported by a small team — every report is read by the people who

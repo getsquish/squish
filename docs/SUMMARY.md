@@ -7,6 +7,7 @@
 * [Quickstart: CLI](getting-started/quickstart-cli.md)
 * [Quickstart: MCP](getting-started/quickstart-mcp.md)
 * [Quickstart: Hosted API](getting-started/quickstart-api.md)
+* [For AI agents](getting-started/for-ai-agents.md)
 
 ## The primitive
 

@@ -36,13 +36,17 @@ plus `/~gitbook/mcp`.
 
 ## Where to start
 
-Three ways to run the same engine:
+Four ways to run the same engine:
 
 | Path | What it is | Start here |
 | --- | --- | --- |
 | **CLI** | `npx -y @getsquish/squish clip.mov` — sheets land beside the input. Local, free, every density ungated. | [CLI quickstart](getting-started/quickstart-cli.md) |
 | **MCP server** | One tool, `squish_video` — the agent squishes local clips itself and reads them with vision. Local, free, every density ungated. | [MCP quickstart](getting-started/quickstart-mcp.md) |
+| **Remote MCP** | The same tool as a hosted connector URL — for official AI apps with no local tools. Point it at a public video URL, which Squish's server fetches and processes; no install. | [Remote MCP endpoint](reference/remote-mcp.md) |
 | **Hosted API** | `POST /v1/squish` — an intentional upload for CI, serverless, and machines without ffmpeg. Prepaid credits, free daily allowance for never-paid accounts. | [Hosted API quickstart](getting-started/quickstart-api.md) |
+
+An agent deciding which surface to call — and how to behave once a sheet comes back — gets
+the whole answer on one page: [For AI agents](getting-started/for-ai-agents.md).
 
 For the *why* — what it means to treat video as an address space, and the navigation loop
 built on top of it — read [Video as address space](the-primitive/video-as-address-space.md).
@@ -51,10 +55,11 @@ For exact contracts — CLI flags, the MCP tool schema, HTTP errors, sheet anato
 
 ## Privacy in one line
 
-The CLI and MCP server process everything **on your machine** — nothing is uploaded, ever. The
-hosted API is the one path where a clip *is* uploaded, on purpose: the video is deleted the
-moment the job ends, and output sheets live at temporary URLs. Full picture:
-[Privacy and data flow](the-primitive/privacy-and-data-flow.md).
+The CLI and MCP server process everything **on your machine** — nothing is uploaded, ever. Two
+paths deliberately move media through Squish's infrastructure, on purpose: the hosted API (you
+upload the clip) and the remote MCP endpoint (the server fetches your public URL). On both, the
+video is deleted the moment the job ends and output sheets live at temporary URLs. Full
+picture: [Privacy and data flow](the-primitive/privacy-and-data-flow.md).
 
 ---
 
