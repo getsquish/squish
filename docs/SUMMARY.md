@@ -29,6 +29,7 @@
 * [Hosted API](reference/http-api.md)
 * [Sheet format spec](reference/sheet-format.md)
 * [Stability and versioning](reference/stability.md)
+* [Benchmark: epic-squish-demo](reference/benchmarks.md)
 
 ## Resources
 
