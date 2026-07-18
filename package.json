@@ -1,6 +1,6 @@
 {
   "name": "@getsquish/squish",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "mcpName": "io.github.getsquish/squish",
   "description": "Give AI random access to video: timestamped contact sheets + zoom into any start/end range, on-device. CLI + MCP server (getsquish.app).",
   "keywords": [

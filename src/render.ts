@@ -14,8 +14,10 @@ import { createCanvas, loadImage, type Image, type SKRSContext2D } from '@napi-r
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { DENSITY, cellWidthForDensity } from './core/density.ts';
+import { fmtTime } from './core/format.ts';
 import { layoutSheet, type SheetLayout } from './core/gridLayout.ts';
 import { planTimecodes, type SheetPlan } from './core/sampling.ts';
+import type { AudioActivity } from './report.ts';
 
 /** Rounded-rect path (ported verbatim; SKRS has roundRect but keeping the same geometry). */
 function roundRect(ctx: SKRSContext2D, x: number, y: number, w: number, h: number, r: number): void {
@@ -99,11 +101,62 @@ export interface ComposeResult {
   warnings: string[];
 }
 
+function drawAudioActivity(
+  ctx: SKRSContext2D,
+  lay: SheetLayout,
+  audio: AudioActivity,
+  sheetIndex: number,
+  sheets: number,
+): void {
+  const { width: width, headerH, pad } = lay;
+  ctx.fillStyle = '#15181B';
+  ctx.fillRect(0, 0, width, headerH);
+
+  const labelPx = Math.max(16, Math.round(headerH * 0.18));
+  const labelY = Math.round(headerH * 0.23);
+  ctx.font = `600 ${labelPx}px monospace`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#9A958B';
+  ctx.fillText(audio.present ? 'AUDIO ACTIVITY · CLIP-PEAK' : 'NO AUDIO TRACK', pad, labelY);
+
+  const windowDuration = audio.window.end - audio.window.start;
+  const sheetStart = audio.window.start + (windowDuration * sheetIndex) / sheets;
+  const sheetEnd = audio.window.start + (windowDuration * (sheetIndex + 1)) / sheets;
+  ctx.textAlign = 'right';
+  ctx.fillText(`${fmtTime(sheetStart, 1)}–${fmtTime(sheetEnd, 1)}`, width - pad, labelY);
+
+  const graphTop = Math.round(headerH * 0.42);
+  const graphBottom = headerH - Math.round(headerH * 0.13);
+  const centerY = Math.round((graphTop + graphBottom) / 2);
+  ctx.fillStyle = '#3A4145';
+  ctx.fillRect(pad, centerY, width - pad * 2, 1);
+  if (!audio.present || audio.samples.length === 0) return;
+
+  const from = Math.floor((audio.samples.length * sheetIndex) / sheets);
+  const to = Math.floor((audio.samples.length * (sheetIndex + 1)) / sheets);
+  const samples = audio.samples.slice(from, Math.max(from + 1, to));
+  const graphWidth = width - pad * 2;
+  const barWidth = Math.max(1, Math.ceil(graphWidth / samples.length));
+  const maxHalfH = Math.max(1, Math.floor((graphBottom - graphTop) / 2));
+  for (let index = 0; index < samples.length; index++) {
+    const level = Math.max(0, Math.min(1, samples[index].level));
+    const halfH = Math.max(1, Math.round(level * maxHalfH));
+    const x = pad + Math.floor((graphWidth * index) / samples.length);
+    ctx.fillStyle = level >= 0.92 ? '#EC4D97' : '#50E3C2';
+    ctx.fillRect(x, centerY - halfH, barWidth, halfH * 2 + 1);
+  }
+}
+
 /**
  * Compose one contact-sheet JPEG per planned sheet from already-extracted frame files.
  * Source aspect comes from the first readable frame (ffmpeg already applied rotation).
  */
-export async function composeSheets(plan: SheetPlan, framePaths: string[][]): Promise<ComposeResult> {
+export async function composeSheets(
+  plan: SheetPlan,
+  framePaths: string[][],
+  audio: AudioActivity,
+): Promise<ComposeResult> {
   const warnings: string[] = [];
   await ensureBrandLogo();
 
@@ -118,6 +171,7 @@ export async function composeSheets(plan: SheetPlan, framePaths: string[][]): Pr
   const tcPx = DENSITY[plan.density].timecodePx;
   const pillH = DENSITY[plan.density].pillPx;
   const brandBandH = Math.max(96, Math.round(tcPx * 3.0));
+  const audioBandH = Math.max(88, Math.round(tcPx * 4.0));
   const cellW = cellWidthForDensity(plan.density, pad);
   const cellH = Math.max(1, Math.round((cellW * first.height) / first.width));
   // One precision rule for pixels AND JSON (spec I2) — planTimecodes, same as the MCP mouth.
@@ -127,12 +181,13 @@ export async function composeSheets(plan: SheetPlan, framePaths: string[][]): Pr
   for (let s = 0; s < plan.sheets; s++) {
     const lay = layoutSheet({
       cols: plan.cols, rows: plan.rows, cellW, cellH, count: plan.perSheet,
-      pad, headerH: 0, labelH: 0, brandBandH,
+      pad, headerH: audioBandH, labelH: 0, brandBandH,
     });
     const canvas = createCanvas(lay.width, lay.height);
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#0E0E10';
     ctx.fillRect(0, 0, lay.width, lay.height);
+    drawAudioActivity(ctx, lay, audio, s, plan.sheets);
 
     for (let i = 0; i < plan.perSheet; i++) {
       const cell = lay.cells[i];

@@ -7,7 +7,7 @@
     "url": "https://github.com/getsquish/squish",
     "source": "github"
   },
-  "version": "0.2.3",
+  "version": "0.3.1",
   "websiteUrl": "https://getsquish.app",
   "remotes": [
     {
@@ -19,7 +19,7 @@
     {
       "registryType": "npm",
       "identifier": "@getsquish/squish",
-      "version": "0.2.3",
+      "version": "0.3.1",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

@@ -6,11 +6,16 @@ description: Direct answers to the questions people actually ask about Squish �
 
 ## Does Squish use audio?
 
-No — Squish is visual only. A contact sheet is a sequence map of what's *on screen*, not a
-video replacement: for "what happens when" across frames it's excellent; for dialogue you
-still need a transcript.
+The CLI and local MCP server (0.3+) extract a low-rate audio-activity envelope and align it to
+the same absolute timeline as the frames. It can reveal *when* energy changes — useful when
+the picture barely changes — but it does not play, transcribe, classify, or interpret audio.
+Levels use one `clip_peak` scale for the full source, including zoomed runs, so quiet and loud
+windows remain comparable. Videos with no audio track still work.
 
-The two compose well, though. Squish timecodes are absolute to the source video, and
+The web app, hosted API, and remote MCP remain visual-only until separately released. For
+dialogue or "what made that sound?", you still need a transcript or audio-capable model.
+
+Those tools compose well. Squish timecodes are absolute to the source video, and
 transcripts are timestamped on that same time axis — so a contact sheet plus a transcript
 line up cell-for-line, and a model given both can connect what was said to what was visible.
 

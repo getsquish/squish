@@ -8,26 +8,32 @@ const sample: RunReport = {
   frames: 9,
   sheets: 1,
   files: ['/v/out/squid.sheet-1.jpg'],
+  audio: {
+    present: true,
+    normalization: 'clip_peak',
+    window: { start: 0, end: 20.275 },
+    samples: [{ time: 10.138, level: 1 }],
+  },
   warnings: [],
 };
 
-test('formatJson emits exactly the frozen contract keys, in order, stamped squish-cli-v0', () => {
+test('formatJson emits the additive v0 contract keys in order, stamped squish-cli-v0', () => {
   const parsed = JSON.parse(formatJson(sample));
-  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'frames', 'sheets', 'files', 'warnings', 'contract']);
+  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'frames', 'sheets', 'files', 'audio', 'warnings', 'contract']);
   assert.deepEqual(parsed, { ...sample, contract: 'squish-cli-v0' });
 });
 
 test('formatMcpJson = CLI fields + timecodes, stamped squish-mcp-v0, keys in order', () => {
   const timecodes = [['0:01', '0:03', '0:05', '0:07', '0:10', '0:12', '0:14', '0:16', '0:19']];
   const parsed = JSON.parse(formatMcpJson(sample, timecodes));
-  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'frames', 'sheets', 'files', 'warnings', 'timecodes', 'contract']);
+  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'frames', 'sheets', 'files', 'audio', 'warnings', 'timecodes', 'contract']);
   assert.deepEqual(parsed, { ...sample, timecodes, contract: 'squish-mcp-v0' });
 });
 
 test('a windowed report adds window after duration — and ONLY when windowed (spec I6)', () => {
   const windowed: RunReport = { ...sample, window: { start: 5, end: 10 } };
   const parsed = JSON.parse(formatJson(windowed));
-  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'window', 'frames', 'sheets', 'files', 'warnings', 'contract']);
+  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'window', 'frames', 'sheets', 'files', 'audio', 'warnings', 'contract']);
   assert.deepEqual(parsed.window, { start: 5, end: 10 });
   // unwindowed output stays byte-identical to the frozen v0 shape
   assert.equal(JSON.parse(formatJson(sample)).window, undefined);
@@ -36,7 +42,7 @@ test('a windowed report adds window after duration — and ONLY when windowed (s
 test('formatMcpJson carries the window the same way', () => {
   const windowed: RunReport = { ...sample, window: { start: 5, end: 10 } };
   const parsed = JSON.parse(formatMcpJson(windowed, [['0:06']]));
-  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'window', 'frames', 'sheets', 'files', 'warnings', 'timecodes', 'contract']);
+  assert.deepEqual(Object.keys(parsed), ['input', 'duration', 'window', 'frames', 'sheets', 'files', 'audio', 'warnings', 'timecodes', 'contract']);
   assert.equal(JSON.parse(formatMcpJson(sample, [['0:06']])).window, undefined);
 });
 

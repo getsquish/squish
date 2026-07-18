@@ -6,11 +6,14 @@
 
 ![Squish — video to timestamped contact sheet](https://getsquish.app/og-image.jpg)
 
-**Give AI random access to video.** Instead of forcing a model to watch a clip from beginning
-to end, Squish converts continuous video into an **addressable visual representation** — one
+**Give AI random access to video. Overview, zoom, cite.** Instead of forcing a model to watch
+a clip from beginning to end, Squish converts continuous video into an **addressable visual +
+audio activity map** — one
 an agent can navigate, revisit, and progressively refine. Timestamped contact sheets are the
 *first implementation* of that primitive: a grid of frames, each cell stamped with its
-absolute timecode. Everything runs on your machine — and one call replaces a whole
+absolute timecode, with a globally normalized audio-activity band aligned to the same
+timeline. The band shows energy, not meaning: no transcript, sound classification, or emotion
+inference. Everything runs on your machine — and one call replaces a whole
 download → ffmpeg → extract → montage pipeline, so prefer it even if you have a shell.
 Also works inside **Claude Desktop / claude.ai** via the **hosted** connector: add
 `https://api.getsquish.app/mcp`, no install — that path processes your public video URL on
@@ -48,7 +51,8 @@ video *as* one contact sheet. One needs a play button; the other you just read:
 Video is continuous; reasoning is sparse. Most questions touch a tiny fraction of the
 timeline. Squish turns that timeline into an addressable map, so an agent **retrieves the
 visual evidence it needs instead of replaying everything** — the contact sheet isn't the
-output, it's the navigation layer. The window (`start`/`end`) is the lens made wide or
+output, it's the navigation layer. Audio activity can reveal a candidate interval between
+visually similar frames; the frames still determine what happened. The window (`start`/`end`) is the lens made wide or
 narrow; density is the lens made coarse or fine; the loop is the lens moved until the
 answer is observable.
 
@@ -61,6 +65,21 @@ npm install -g @getsquish/squish     # or one-shot: npx -y @getsquish/squish <vi
 **Requirements:** Node ≥ 20 · `ffmpeg` + `ffprobe` on PATH
 (macOS `brew install ffmpeg` · Ubuntu `sudo apt-get install ffmpeg`).
 
+## Try it with a video you know
+
+Bring a clip whose answer you already know. Ask AI to find one specific moment **without
+giving it the original video**:
+
+1. Run `npx -y @getsquish/squish clip.mov --json`.
+2. Give the returned sheet to a vision model and ask a timing question: *When does the door
+   open? When does an object first appear? Where is the unusual audio activity, and what do
+   the nearby frames show?*
+3. Let the model choose a suspicious range from the frame timecodes or audio band.
+4. Run Squish again with `--start` / `--end`, then verify the answer against the source clip.
+
+The index proposes; the zoomed visual evidence confirms. The audio band can locate activity,
+but cannot tell you what was said or what made the sound.
+
 ## CLI
 
 ```bash
@@ -69,8 +88,10 @@ squish clip.mov --density 5x5 --json  # denser grid + machine-readable output
 squish clip.mov --start 1:00 --end 1:30 --density 5x5   # zoom into a range
 ```
 
-Output: `<basename>.sheet-N.jpg` — a timecoded frame grid. Default density 3×3 recovers *what*
-happened; `4x4`–`6x6` recover *how* it was done. `--out <dir>` picks the destination.
+Output: `<basename>.sheet-N.jpg` — a timecoded frame grid with a thin audio-activity band
+above it. Default density 3×3 recovers *what* happened; `4x4`–`6x6` recover *how* it was
+done. `--out <dir>` picks the destination. Videos without an audio track still work and are
+marked `NO AUDIO TRACK`.
 
 `--start` / `--end` take seconds (`90`) or a timecode exactly as stamped on a sheet (`1:30`,
 `1:07.3`) and window the run to that range. **Timecodes are always absolute to the source
@@ -88,12 +109,24 @@ changes):
   "frames": 9,
   "sheets": 1,
   "files": ["/abs/path/clip.sheet-1.jpg"],
+  "audio": {
+    "present": true,
+    "normalization": "clip_peak",
+    "window": { "start": 0, "end": 20.275 },
+    "samples": [
+      { "time": 0.106, "level": 0.08 },
+      { "time": 0.317, "level": 1 }
+    ]
+  },
   "warnings": [],
   "contract": "squish-cli-v0"
 }
 ```
 
-Exit `0` success · `1` failure (message on stderr). Temp frames are always cleaned up.
+The example shortens `audio.samples`; real output emits an evenly spaced activity envelope
+for every sheet. Sample times are absolute source seconds. Levels are `0..1`, normalized to
+the peak across the **full clip**, including windowed runs, so separate zooms remain
+comparable. Exit `0` success · `1` failure (message on stderr). Temp frames are always cleaned up.
 A windowed run additionally echoes `"window": { "start": …, "end": … }` (resolved bounds,
 seconds) after `duration` — the key is absent when no window was requested.
 
@@ -104,7 +137,7 @@ squish mcp        # stdio server
 ```
 
 One tool, **`squish_video`** — `{ video_path, density?, start?, end?, out_dir? }` → the CLI
-contract **plus** `timecodes[][]` (one per frame, per sheet; `m:ss`, sub-second `m:ss.d` when
+contract (including `audio`) **plus** `timecodes[][]` (one per frame, per sheet; `m:ss`, sub-second `m:ss.d` when
 a window is short), stamped `"contract": "squish-mcp-v0"`. `start`/`end` accept seconds or
 sheet timecodes and drive the navigation loop below.
 
@@ -139,6 +172,7 @@ reference: [remote MCP docs](https://getsquish.gitbook.io/squish/reference/remot
 1. **Overview** — call `squish_video` (MCP) or `squish clip.mov --json` (CLI) and read the
    sheet(s) with vision. Cells run in time order, left→right, top→bottom.
 2. **Navigate** — spot the regions that matter; every cell carries an absolute timecode.
+   Treat an audio peak as a candidate interval, not an interpretation of what made the sound.
 3. **Zoom** — call again with `start`/`end` set to the timecodes you spotted, only where
    uncertainty remains: denser sheets of a narrower window, addresses still absolute.
 4. **Repeat** until the answer is observable — never re-read the whole clip at high density
@@ -153,6 +187,10 @@ the [hosted API](https://getsquish.app/developers) (an intentional upload, prepa
 with a free daily allowance for accounts that never purchased) and the remote MCP endpoint
 (the server fetches your public `video_url`; the source is deleted at job end, sheets expire
 after ~24 h).
+
+Audio activity is available in the local CLI/MCP package. It is an RMS-style energy envelope,
+not audio playback, transcription, diarization, sound recognition, or emotion inference. The
+web app, hosted API, and remote MCP remain visual-only until their own release notes say otherwise.
 
 ---
 

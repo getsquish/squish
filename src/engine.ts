@@ -8,7 +8,8 @@ import path from 'node:path';
 import { DENSITY, type DensityKey } from './core/density.ts';
 import { fmtTime } from './core/format.ts';
 import { planSheets, type SheetPlan } from './core/sampling.ts';
-import { assertFfmpeg, extractFrame, probeDuration } from './ffmpeg.ts';
+import { absentAudioActivity, analyzePcmActivity, decodePcmS16le } from './audio.ts';
+import { assertFfmpeg, extractAudioPcm, extractFrame, probeDuration, probeHasAudio } from './ffmpeg.ts';
 import { composeSheets } from './render.ts';
 import type { RunReport } from './report.ts';
 
@@ -90,6 +91,23 @@ export async function runSquish(opts: RunOptions): Promise<RunResult> {
   // Guardrail 2: per-run tmpdir under os.tmpdir(), removed in finally — success OR error.
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'squish-'));
   try {
+    const audioWarnings: string[] = [];
+    let audio = absentAudioActivity(win);
+    if (await probeHasAudio(input)) {
+      try {
+        const pcmSampleRate = 1_000;
+        const pcm = decodePcmS16le(await extractAudioPcm(input, duration, pcmSampleRate));
+        audio = analyzePcmActivity(pcm, {
+          sourceDuration: duration,
+          window: win,
+          outputSamples: plan.sheets * 96,
+          pcmSampleRate,
+        });
+      } catch (error) {
+        audioWarnings.push(`audio activity unavailable — visual sheets still complete (${error instanceof Error ? error.message : String(error)})`);
+      }
+    }
+
     const framePaths: string[][] = [];
     for (let s = 0; s < plan.sheets; s++) {
       const row: string[] = [];
@@ -102,7 +120,9 @@ export async function runSquish(opts: RunOptions): Promise<RunResult> {
       framePaths.push(row);
     }
 
-    const { buffers, warnings } = await composeSheets(plan, framePaths);
+    const composed = await composeSheets(plan, framePaths, audio);
+    const warnings = [...audioWarnings, ...composed.warnings];
+    const { buffers } = composed;
 
     const files: string[] = [];
     for (let s = 0; s < buffers.length; s++) {
@@ -120,6 +140,7 @@ export async function runSquish(opts: RunOptions): Promise<RunResult> {
       frames: plan.sheets * plan.perSheet,
       sheets: files.length,
       files,
+      audio,
       warnings,
     };
     return { report, plan };

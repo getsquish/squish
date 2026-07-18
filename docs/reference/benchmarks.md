@@ -51,7 +51,7 @@ spacing on every event.
 | 2 | *"When does the squid first appear, and when is it fully gone?"* | first ~0:02.9 · fully gone ~0:07.9 | ±0.2 s | Two targets at opposite ends → window planning |
 | 3 | *"At what timecode do the red and green balls first touch?"* | 0:04.53–0:04.56 | ±0.1 s | Precision stress test — needs a third-level zoom (~30 ms cells) to answer inside tolerance |
 | 4 | *"Who delivers the balls?"* | The pink squid (it delivers the green and yellow; the red was already there) | — | Narrative assembly across windows |
-| 5 | *"What sound does the squid make?"* | A refusal: contact sheets carry no audio | — | No-audio honesty |
+| 5 | *"What sound does the squid make?"* | A refusal: activity timing cannot identify a sound, and this clip has no relevant audio track | — | Audio-boundary honesty |
 
 ## Scoring
 

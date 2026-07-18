@@ -12,7 +12,9 @@ A contact sheet is the page format of Squish's address space: **one image contai
 * **Cells run in time order, left→right, top→bottom.** Adjacent cells that look similar mean little changed in that gap; a hard visual break between cells is where an event happened.
 * **Every cell carries a timecode pill** — the moment that frame came from (`0:14`, `1:07.3`). Timecodes are always absolute to the source video, even inside a window, so anything read off a sheet can be cited or passed back as a new `start`/`end`.
 * **Long videos produce multiple files**, named `<basename>.sheet-N.jpg`. Each sheet covers a consecutive window of the clip; read them in order. Duration decides how many sheets there are; density decides how many frames each sheet carries.
-* **A sheet is visual only.** It carries no audio, speech, or transcript.
+* **Frames remain visual evidence.** CLI/local MCP 0.3+ may add an aligned audio-activity band,
+  but it carries energy only — no speech, transcript, or sound identity. Hosted sheets remain
+  visual-only until separately released.
 
 ## Density is temporal resolution
 

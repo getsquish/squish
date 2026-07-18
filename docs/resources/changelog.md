@@ -9,6 +9,39 @@ User-facing changes per published version of
 are the npm publish dates. Release notes also live on
 [GitHub Releases](https://github.com/getsquish/squish/releases).
 
+## 0.3.1 — 2026-07-18
+
+Audio activity now preserves high-frequency energy when building its low-rate timeline.
+
+- Fixed a resampling error in 0.3.0 that could make continuous tones above 500 Hz appear nearly
+  silent. Squish now builds a full-band activity envelope before reducing it to the compact
+  1 kHz representation used by sheets and JSON.
+- No contract or command changes: `audio.samples[]`, `clip_peak`, CLI, and local MCP retain the
+  0.3.0 shapes. Videos without audio and videos with silent tracks retain their distinct results.
+
+## 0.3.0 — 2026-07-18
+
+Audio activity becomes a navigation channel on the local mouths.
+
+- Every CLI/local-MCP sheet now carries a thin **audio-activity band** above the visual grid,
+  aligned to the same absolute source timeline. High-energy peaks are marked so an agent can
+  choose a range to inspect even when adjacent frames look alike.
+- JSON adds an `audio` object without removing or renaming any v0 field:
+  `present`, `normalization`, absolute `window`, and `samples[]` (`time`, `level`). Local MCP
+  returns the same object alongside `timecodes[][]`.
+- Levels use `normalization: clip_peak` across the full source clip, including windowed calls.
+  A quiet zoom therefore stays quiet relative to the overview instead of being independently
+  normalized until every interval looks loud.
+- The activity envelope keeps short transients during overview downsampling. Videos with a
+  silent track return zero levels; videos with no audio track still produce sheets and report
+  `present: false`.
+- Scope boundary: activity answers *when audio energy changed*, not what was said or what made
+  the sound. No transcription, diarization, audio-event classification, or emotion inference.
+  The web app, hosted API, and remote MCP remain visual-only until separately released.
+- README and `video-navigation` skill now include a five-minute test protocol: bring a video
+  whose answer you know, ask for one specific moment, navigate overview → zoom, and verify the
+  cited time against the source.
+
 ## 0.2.3 — 2026-07-14
 
 The discoverable release: agents can now find Squish on their own.

@@ -1,25 +1,27 @@
 ---
 name: video-navigation
-description: Navigate videos an agent cannot ingest directly - turn any clip into timestamped contact sheets, read the grid, zoom into ranges, and cite exact timecodes. Use when asked what happens in a video or screen recording, to find the moment something changes or appears, or to answer with timestamp citations from footage too long to watch. Retrieval and navigation only, not video editing. Works through any contact-sheet tool (Squish CLI/MCP - local needs Node >= 20 and ffmpeg on PATH; a hosted connector exists when local tools are unavailable).
+description: Navigate videos an agent cannot ingest directly - turn any clip into timestamped visual and audio-activity maps, inspect the evidence, zoom into ranges, and cite exact timecodes. Use when asked what happens in a video or screen recording, to find the moment something changes, appears, or produces unusual audio activity, or to answer with timestamp citations from footage too long to watch. Retrieval and navigation only, not video editing. Squish CLI/local MCP needs Node >= 20 and ffmpeg on PATH; hosted paths remain visual-only until separately released.
 license: Apache-2.0
 metadata:
   author: getsquish
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Video navigation: treat video as an address space
 
 You have vision but cannot ingest video. When a task involves a video's content, do not guess
 and do not refuse — compress the clip into **timestamped contact sheets** (one image per
-window of the clip, frames sampled evenly, each cell stamped with its timecode) and read
-those. The sheet is your index into the video; zooming is how you navigate it.
+window of the clip, frames sampled evenly, each cell stamped with its timecode) and, when the
+tool provides it, an audio-activity band on the same absolute timeline. The map is your index
+into the video; zooming is how you navigate it.
 
-The reasoning primitive: **video → contact sheet → read the grid → zoom where it matters →
+The reasoning primitive: **video → visual + audio activity map → inspect → zoom where it matters →
 answer with timecodes.**
 
 **Non-goals.** This is a video *navigation and retrieval* skill, not a video *editing*
-workflow. Navigation over editing; retrieval over transformation. It does not transcribe
-(sheets carry no audio) and a sheet is a sequence map, not motion replacement. Your
+workflow. Navigation over editing; retrieval over transformation. Audio activity is an
+energy envelope, not transcription, sound classification, or emotion inference; a sheet is
+a sequence map, not motion replacement. Your
 deliverable is answers with timestamps — absolute seconds that hand off cleanly to any
 editing or clipping tool, which is where this skill stops.
 
@@ -31,20 +33,22 @@ editing or clipping tool, which is where this skill stops.
 - The clip is too long or too large to ingest any other way.
 
 **When not to use:** the user needs one specific frame only (extract that frame instead); the
-question isn't about visual content. **Pairing note:** if the question is about *what was
-said*, a transcript is the better index — pair with an ASR/transcript tool; this skill's
-index is visual on purpose, and speech-free footage (where transcripts come back empty) is
-exactly where it is strongest.
+question cannot be answered from either frames or activity timing. **Pairing note:** if the
+question is about *what was said*, pair with an ASR/transcript tool. Audio activity can locate
+when something happened, but cannot recover words or identify the source of a sound.
 
 ## What you need: a squisher
 
 Any tool implementing this contract (see **Wiring** below for today's implementations):
 
-> **(video, density?, start?, end?) → sheet image(s) + per-cell timecodes**
+> **(video, density?, start?, end?) → sheet image(s) + per-cell timecodes + optional audio activity**
 
 - `density` — grid size per sheet (`3x3` … `6x6`): more frames per call.
 - `start`/`end` — window the run to a time range: more precision per frame.
 - Output: sheet images in time order, plus the timecode of every cell.
+- Local Squish 0.3+ also returns `audio.samples[]` (`time` = absolute seconds, `level` =
+  `0..1`) and burns the same activity envelope above the grid. `normalization: clip_peak`
+  means zoom calls stay comparable to the whole clip.
 
 ## The navigation loop
 
@@ -52,7 +56,9 @@ Any tool implementing this contract (see **Wiring** below for today's implementa
    read them in order; each covers a consecutive window.
 2. **Read the grid.** Cells run in time order, left→right, top→bottom. The pill in each
    cell's corner is that frame's timecode. Adjacent cells that look alike = little changed in
-   that window; a hard visual break between cells = an event happened there.
+   that window; a hard visual break between cells = an event happened there. An audio peak
+   proposes a suspicious interval even when adjacent frames look alike; it does not explain
+   the sound, so inspect the frames before making a claim.
 3. **Zoom.** Call again with `start`/`end` set to timecodes you actually read off a sheet.
    Timecodes are **absolute to the source at every depth**, so ranges compose: overview →
    range → moment. Pick the lever deliberately — **density packs more frames into one call;
@@ -104,7 +110,10 @@ Approaches that consistently fail:
 - **Treating a sheet as motion** — it's a sequence map; don't claim smooth motion detail
   between cells.
 - **Burning remote quota to test wiring** — verify with the local mouth; it's free.
-- **Answering "what was said" from sheets** — no audio; pair with a transcript tool.
+- **Answering "what was said" from activity timing** — the envelope is not speech; pair with
+  a transcript tool.
+- **Naming a sound from an activity peak** — energy gives you *when*, not *what*; zoom and use
+  visual evidence, or pair with an audio-capable model.
 
 ## Wiring: today's implementations
 
@@ -112,9 +121,9 @@ If tool names differ from these, match by the contract shape above.
 
 | Mouth | How | Notes |
 |---|---|---|
-| **MCP (local)** | tool `squish_video` — register with `npx -y @getsquish/squish mcp` | args `{ video_path, density?, start?, end?, out_dir? }`; returns `files[]` + `timecodes[][]` (per-sheet, per-cell). Nothing leaves the machine. |
-| **CLI** | `npx -y @getsquish/squish <video> --json [--density 4x4] [--start 1:00 --end 1:15] [--out dir]` | stdout JSON: `files[]`, contract `squish-cli-v0` — no `timecodes[][]` field on this path; the timecodes are the pills burned into each cell, so read them off the sheets. Needs Node ≥ 20 + ffmpeg. |
-| **MCP (remote)** | Streamable HTTP connector at `https://api.getsquish.app/mcp` | input is `video_url` (public URL) — the server **fetches** it, so the footage transits Squish infrastructure; anonymous free lane (small daily cap) or `Authorization: Bearer` key; first sheet arrives inline. Quota errors are structured — relay the hint to the user (most lanes include a `billing_url`; ChatGPT-app traffic hears the daily reset + free local tool instead), don't retry blindly. |
+| **MCP (local)** | tool `squish_video` — register with `npx -y @getsquish/squish mcp` | args `{ video_path, density?, start?, end?, out_dir? }`; returns `files[]` + `timecodes[][]` + `audio`. Nothing leaves the machine. |
+| **CLI** | `npx -y @getsquish/squish <video> --json [--density 4x4] [--start 1:00 --end 1:15] [--out dir]` | stdout JSON: `files[]` + `audio`, contract `squish-cli-v0`; timecodes are burned into the sheet. Needs Node ≥ 20 + ffmpeg. |
+| **MCP (remote)** | Streamable HTTP connector at `https://api.getsquish.app/mcp` | visual-only until separately released; input is a public `video_url`, fetched by Squish infrastructure. |
 
 `density` accepts `3x3`–`6x6`; `start`/`end` accept seconds or sheet timecode strings like
 `"1:07.3"`. Read each returned sheet with vision, in order.

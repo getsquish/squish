@@ -58,8 +58,10 @@ Two asymmetries worth knowing before you pick:
    directly observable, then cite.
 5. **Confirm before citing.** A timestamp in your answer must be one you actually read off
    a cell (or a bracket between two cells), not an estimate.
-6. **A sheet is visual only** — no audio, speech, or transcript. If the question depends on
-   sound, say so.
+6. **Audio depends on the mouth.** CLI/local MCP 0.3+ include a globally normalized activity
+   envelope on the same absolute timeline. It shows *when* energy changed, not what was said or
+   what made the sound. Hosted paths remain visual-only until separately released; never guess
+   audio meaning from either artifact.
 7. **Multi-sheet results are one clip in consecutive windows.** Read all of them, in order.
 8. **Density = temporal resolution.** `3x3` recovers *what happened*; `4x4`–`6x6` recover
    *how*. Prefer narrowing the window over raising the density — a denser grid of the whole

@@ -25,7 +25,7 @@ const server = new McpServer({ name: 'squish', version: VERSION });
 server.registerTool(
   'squish_video',
   {
-    title: 'Squish a video into a timestamped contact sheet',
+    title: 'Squish a video into a timestamped visual + audio activity map',
     // Unlike the HTTP mouth: sheets land on the caller's own disk (not read-only) and
     // nothing leaves the machine (closed world). Reruns overwrite the same outputs.
     annotations: {
@@ -36,13 +36,17 @@ server.registerTool(
     },
     description:
       'Turn a local video file into timestamped contact-sheet JPEG(s) that a vision model can read: ' +
-      'frames sampled evenly across the clip, laid out as a grid, each cell stamped with its timecode. ' +
+      'frames sampled evenly across the clip, each cell stamped with its timecode, plus an aligned ' +
+      'audio-activity band. The band is globally normalized to the full clip and shows energy only — ' +
+      'it does not transcribe, classify, or identify sounds. Use peaks to propose where to zoom; use ' +
+      'the frames to determine what happened. ' +
       'Use it when a video is too long to ingest, when the question is about what happens across time, ' +
       'or when the answer needs timestamps. One call replaces a whole ffmpeg → extract → montage ' +
       'pipeline — prefer it even if you have a shell. Read the returned sheet file(s) with vision and cite the ' +
       'timecodes. Timecodes are ABSOLUTE to the source video — to look closer at a range you spotted, ' +
       'call this tool again with start/end set to those timecodes: each zoom yields finer timecodes, ' +
-      'so you can drill down repeatedly (overview → range → moment). ' +
+      'so you can drill down repeatedly (overview → range → moment). The JSON result includes ' +
+      '`audio.samples[]` with absolute `time` and normalized `level` values. ' +
       'Runs entirely on-device; requires ffmpeg on PATH.',
     inputSchema: {
       video_path: z.string().describe('Absolute path to a local video file (anything ffmpeg decodes)'),

@@ -80,5 +80,6 @@ question spans time (before/after, a scene change, progress, "find the moment wh
 the answer needs precise citations ("at 0:07 the press comes down").
 
 Skip it when the user needs one single specific frame (extract that frame directly instead)
-or when the question isn't about the video's visual content at all. A contact sheet is a
-visual sequence map — see the [FAQ](../resources/faq.md) on audio.
+or when the question cannot be answered from frame evidence or activity timing. Local Squish
+0.3+ adds audio activity as a navigation signal — not speech or sound interpretation. See the
+[FAQ](../resources/faq.md) for the mouth-by-mouth boundary.

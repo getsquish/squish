@@ -49,6 +49,9 @@ const parsed = JSON.parse(text);
 assert.equal(parsed.contract, 'squish-mcp-v0');
 assert.ok(parsed.sheets >= 1 && parsed.files.length === parsed.sheets, 'sheet files reported');
 assert.equal(parsed.timecodes.flat().length, parsed.frames, 'one timecode per frame');
+assert.equal(parsed.audio.normalization, 'clip_peak', 'audio activity uses full-clip normalization');
+assert.ok(parsed.audio.samples.length > 0, 'audio activity samples returned for the fixture');
+assert.ok(parsed.audio.samples.every((sample: { time: number }) => sample.time >= 0), 'audio sample times are absolute source seconds');
 await Promise.all(parsed.files.map((f: string) => access(f)));
 
 // A wrong-path call must surface as a tool error, not a crash.

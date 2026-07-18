@@ -5,6 +5,15 @@ import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 
+function runBuffer(file: string, args: string[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 }, (error, stdout) => {
+      if (error) reject(error);
+      else resolve(stdout);
+    });
+  });
+}
+
 // The exact preflight message is a D6 contract (message-only hosted fallback): install lines
 // a human can run immediately, THEN the hosted pointer — never an auto-upload.
 export const FFMPEG_HINT = `ffmpeg + ffprobe are required (Squish samples frames with them).
@@ -33,6 +42,37 @@ export async function probeDuration(input: string): Promise<number> {
   const d = parseFloat(stdout.trim());
   if (!isFinite(d) || d <= 0) throw new Error(`could not read a duration from ${input}`);
   return d;
+}
+
+export async function probeHasAudio(input: string): Promise<boolean> {
+  const { stdout } = await run('ffprobe', [
+    '-v', 'error',
+    '-select_streams', 'a:0',
+    '-show_entries', 'stream=index',
+    '-of', 'csv=p=0',
+    input,
+  ]);
+  return stdout.trim().length > 0;
+}
+
+/**
+ * Decode a low-rate mono activity envelope, preserving gaps and padding a short track.
+ * Rectify at the source rate before resampling so anti-aliasing cannot erase energy above the
+ * envelope rate's Nyquist limit (for example, an 880 Hz tone in a 1 kHz envelope).
+ */
+export async function extractAudioPcm(input: string, duration: number, sampleRate = 1_000): Promise<Buffer> {
+  return runBuffer('ffmpeg', [
+    '-v', 'error',
+    '-i', input,
+    '-map', '0:a:0',
+    '-vn',
+    '-af', `aformat=sample_fmts=fltp:channel_layouts=mono,aeval=exprs=abs(val(0)),aresample=${sampleRate}:async=1:first_pts=0,apad`,
+    '-ac', '1',
+    '-ar', String(sampleRate),
+    '-t', duration.toFixed(3),
+    '-f', 's16le',
+    'pipe:1',
+  ]);
 }
 
 /**
