@@ -20,6 +20,7 @@
 
 * [Prompt library](recipes/prompt-library.md)
 * [Install the agent skill](recipes/agent-skill.md)
+* [Build Week: audio-guided candidate selection](recipes/build-week-audio-navigation.md)
 
 ## Reference
 

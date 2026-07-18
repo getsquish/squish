@@ -80,6 +80,34 @@ giving it the original video**:
 The index proposes; the zoomed visual evidence confirms. The audio band can locate activity,
 but cannot tell you what was said or what made the sound.
 
+## OpenAI Build Week 2026
+
+The Build Week extension added audio-guided candidate selection to Squish's existing navigation
+loop. Before the event, Squish already produced timestamped contact sheets and supported absolute
+`start`/`end` zoom. Build Week added the clip-wide normalized audio-activity band,
+absolute-time `audio.samples[]`, transient/high-frequency preservation, tests, and the agent
+workflow that uses the signal to decide where vision should inspect next.
+
+The demo keeps two proof layers separate:
+
+- **Narrative proof:** owner-authorized private camera footage is shown with receipts, but the
+  source footage is not distributed.
+- **Reproducible proof:** the public repository contains a generated fixture and its source under
+  [`examples/audio-navigation/`](https://github.com/getsquish/squish/tree/main/examples/audio-navigation).
+
+```bash
+git clone https://github.com/getsquish/squish.git
+cd squish
+./examples/audio-navigation/generate-sample.sh
+npx -y @getsquish/squish@0.3.1 examples/audio-navigation/sample.mp4 --json --out /tmp/squish-overview
+npx -y @getsquish/squish@0.3.1 examples/audio-navigation/sample.mp4 \
+  --density 6x6 --start 11.5 --end 13.5 --json --out /tmp/squish-zoom
+```
+
+The overview's activity band proposes the neighborhood. The dense visual sheet confirms the brief
+pink marker. Public `0.3.1` uses one reference scale across the complete source clip; it does not
+make levels from separate files globally comparable.
+
 ## CLI
 
 ```bash
