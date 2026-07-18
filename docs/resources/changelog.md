@@ -19,6 +19,19 @@ Audio activity now preserves high-frequency energy when building its low-rate ti
 - No contract or command changes: `audio.samples[]`, `clip_peak`, CLI, and local MCP retain the
   0.3.0 shapes. Videos without audio and videos with silent tracks retain their distinct results.
 
+{% hint style="success" %}
+**Try 0.3.1 on a video you know:**
+
+```bash
+npx -y @getsquish/squish@0.3.1 clip.mov --json
+```
+
+The JPEG contact sheet includes frames, absolute timecodes, and an audio-activity band. Ask an AI
+to find one specific moment, then run Squish again with that range—for example,
+`--start 12 --end 18`—to inspect it more closely. The CLI requires Node.js 20+ and ffmpeg; video
+processing stays on your machine.
+{% endhint %}
+
 ## 0.3.0 — 2026-07-18
 
 Audio activity becomes a navigation channel on the local mouths.
